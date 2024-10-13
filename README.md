@@ -10,7 +10,7 @@ date).
 - **Efficient & Fast**: Designed to handle large batches of photos.
   
 ## Requirements
-- Python 3.x
+- Python 3.12
 - `requests` library
 - `os` and `shutil` for file operations
 - PCloud API access (you will need to generate an authentication token)
