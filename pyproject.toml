@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "file-uploader"
+version = "0.1.0"
+description = ""
+authors = ["frandiego <franciscojosediegoacosta@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pillow = "^10.4.0"
+joblib = "^1.4.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
