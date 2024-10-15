@@ -17,11 +17,12 @@ date).
 1. Install poetry
  * https://python-poetry.org/docs/
 2. Clone this repository:
-   \`\`\`bash
+
+   ```bash
    git clone https://github.com/frandiego/file_uploader.git
    cd file_uploader
    make it
-   \`\`\`
+   ```
 
 ## Contributing
 Feel free to submit issues or pull requests to improve the project!
