@@ -10,24 +10,16 @@ date).
 - **Efficient & Fast**: Designed to handle large batches of photos.
   
 ## Requirements
-- Python 3.12
-- `requests` library
-- `os` and `shutil` for file operations
-- PCloud API access (you will need to generate an authentication token)
+- poetry
+- PCloud Account
 ## Installation
 1. Clone this repository:
    \`\`\`bash
    git clone https://github.com/yourusername/photo-sorter-uploader.git
    cd photo-sorter-uploader
    \`\`\`
-2. Install the required Python packages:
-   \`\`\`bash
-   pip install -r requirements.txt
-   \`\`\`
-3. Set up PCloud API authentication by adding your token to the `.env` file:
-   \`\`\`bash
-   PCloud_TOKEN=your_pcloud_token
-   \`\`\`
+2. Install poetry:
+
 ## Usage
 1. Place your camera's photos in the designated `input/` folder.
 2. Run the script to automatically sort and upload the photos:
@@ -35,11 +27,8 @@ date).
    python main.py
    \`\`\`
    The photos will be moved into `sorted_photos/` organized by year and month and uploaded to PCloud.
-## File Structure
-- **input/**: Directory where you place your unsorted photos.
-- **sorted_photos/**: Directory where photos are organized after processing.
-- **upload.py**: Handles the upload to PCloud.
-- **sort.py**: Sorts the photos based on EXIF data (creation date).
+
+
 ## Contributing
 Feel free to submit issues or pull requests to improve the project!
 ## License
