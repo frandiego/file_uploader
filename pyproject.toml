@@ -10,6 +10,7 @@ python = "^3.12"
 pillow = "^10.4.0"
 joblib = "^1.4.2"
 pcloud = "^1.3"
+questionary = "^2.0.1"
 
 
 [build-system]
