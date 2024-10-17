@@ -1,37 +1,31 @@
-from joblib import Parallel, delayed
 from functools import partial
+from joblib import cpu_count
+from loguru import logger
 from pathlib import Path
 from PIL import Image
 import os
 import re
+from src import SRC
+
 
 class Structure:
+    file_pattern = re.compile(r"^([0-9]+(-[0-9]+)+)_[a-z0-9]+$", re.IGNORECASE)
+    cores : int = int(cpu_count())
 
-    @staticmethod
-    def mkdir(path: str) -> None:
-        os.system(f'mkdir -p {os.path.realpath(os.path.expanduser(path))}')
-
-    @classmethod
-    def parallel(cls, function, iterator: map, cores: int) -> map:
-        return Parallel(n_jobs=cores)(delayed(function)(i) for i in iterator)
+    def __init__(
+            self, 
+            path: str, 
+            extensions: str, 
+            raw_extensions: str, 
+            ) -> None:
+        self.path = os.path.realpath(os.path.expanduser(path))
+        self.extensions = list(map(lambda i: i.lower(), extensions.split(',')))
+        self.raw_extensions = list(map(lambda i: i.lower(), raw_extensions.split(',')))
 
     
-    @classmethod
-    def list_files(
-            cls, 
-            path: str, 
-            extensions:str=None, 
-            ) -> list:
-        """ List Files Recursively within a path filtered by extensions
-
-        Args:
-            path (str): Path to find files
-            extensions (str, optional): list of extensions like jpg, raf. Defaults to None.
-
-        Returns:
-            list: a generator of all files
-        """
-        ls = Path(path).rglob('*')
+    @staticmethod
+    def list_pictures(path: str, extensions: list) -> list:
+        ls = Path(os.path.realpath(os.path.expanduser(path))).rglob('*')
         if extensions:
             regex = re.compile('|'.join([rf'\.{i}$' for i in extensions]))
             ls = filter(lambda i: bool(regex.search(str(i.name).lower())), ls)
@@ -91,15 +85,8 @@ class Structure:
         if str(filefrom) != str(fileto):
             filefrom.rename(str(fileto))
     
-    @classmethod
-    def make(
-            cls, 
-            path, 
-            extensions: list, 
-            raw_extensions: list, 
-            cores: int, 
-        ) -> None:
-        """_summary_
+    def make(self) -> None:
+        """ Sort and Make a Structure for the pictures
 
         Args:
             path (_type_): main path of the pictures
@@ -107,16 +94,17 @@ class Structure:
             raw_extensions (list): name of raw pictures extensions like raf
             cores (int): number of cores to parallelize process
         """
-        pictures = cls.list_files(path=path, extensions=extensions)
-        pattern = re.compile(r"^([0-9]+(-[0-9]+)+)_[a-z0-9]+$", re.IGNORECASE)
-        fun = partial(cls.key_time, pattern = pattern)
-        translit = dict(cls.parallel(function=fun, iterator=pictures, cores=cores))
-        all_files = cls.list_files(path=path, extensions=extensions + raw_extensions)
+        logger.info(f"Sorting all pictures in {self.path}")
+        fun = partial(self.key_time, pattern = self.file_pattern)
+        pictures = self.list_pictures(path=self.path, extensions=self.extensions)
+        translit = dict(SRC.parallel(function=fun, values=pictures, cores=self.cores))
         regex = re.compile('|'.join(map(re.escape, translit)))
-        fun = partial(cls.travel, regex=regex, translit=translit, path=path)
-        travel_dict = dict(cls.parallel(function=fun, iterator=all_files, cores=cores))
+        fun = partial(self.travel, regex=regex, translit=translit, path=self.path)
+        self.extensions += self.raw_extensions
+        all_files = self.list_pictures(path=self.path, extensions=self.extensions + self.raw_extensions)
+        travel_dict = dict(SRC.parallel(function=fun, values=all_files, cores=self.cores))
         folders = set(map(lambda i: Path(i).parent._str, travel_dict.values()))
         for folder in list(folders):
-            cls.mkdir(folder)
-        cls.parallel(function=cls.move, iterator=travel_dict.items(), cores=cores)
+            SRC.mkdir(folder)
+        SRC.parallel(function=self.move, values=travel_dict.items(), cores=self.cores)
         

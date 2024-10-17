@@ -1,9 +1,14 @@
-from functools import partial
 from structure import Structure
+from functools import partial
 from pcloud import PyCloud
+from loguru import logger
+from src import SRC
 import os
 
+
 class PCloud:
+    folder: str = None
+    list_files: list = None
 
     def __init__(
             self, 
@@ -11,11 +16,15 @@ class PCloud:
             password: str, 
             ) -> None:
         self.client = PyCloud(username=username, password=password, endpoint='eapi')
-        self.list_files: list = None
+        
+
+
+    def _set_folder(self, folder: str) -> None:
+        self.folder = '/' + '/'.join(folder.split('/'))
 
     def _list_files(self, path: str, extensions: list) -> None:
         if not self.list_files:
-            self.list_files = sorted(set(Structure.list_files(path=path, extensions=extensions)))
+            self.list_files = sorted(set(Structure.list_pictures(path=path, extensions=extensions)))
         return self.list_files
     
     def create_folder_if_not_exists(
@@ -30,6 +39,7 @@ class PCloud:
         folders = list(filter(lambda i: i!='', path.split('/')))
         for i in range(len(folders)):
             path = '/' + os.path.join(*folders[:i+1])
+            logger.info(f"Checking if {path} exists in PCloud")
             self.client.createfolderifnotexists(path=path)
 
     def check_folders(
@@ -65,18 +75,19 @@ class PCloud:
             path (str): path where local files
             pcloudpath (str): folder of pcloud pictures
         """
+        print(files)
         ls = list(map(lambda i: (os.path.dirname(str(i)), i), files))
         folders = sorted(set(map(lambda i: i[0], ls)))
         move_dict = dict(zip(folders, list(list(map(lambda i: str(i[1]), filter(lambda i: i[0]==f, ls))) for f in folders)))
         for local_path, files in move_dict.items():
             pcloud_path = str(local_path).replace(path, pcloudpath)
+            logger.info(f"Uploading {len(files)} to {pcloud_path}")
             self.client.uploadfile(files=files, path=str(pcloud_path))
 
     
     def upload(
             self, 
             path: str, 
-            pcloudpath: str, 
             extensions: list, 
             cores: int, 
     ) -> None:
@@ -88,9 +99,10 @@ class PCloud:
             extensions (list): extensions os files
             cores (int): cores to paralelize
         """
-        ls = self._list_files(path=path, extensions=extensions)
-        fun = partial(self.upload_files, path=path, pcloudpath=pcloudpath)
-        Structure.parallel(function=fun, iterator=ls, cores = cores)
+        files = self._list_files(path=path, extensions=extensions)
+        logger.info(f"Uploading {len(files)} to PCloud {self.folder}")
+        fun = partial(self.upload_files, path=path, pcloudpath=self.folder)
+        SRC.parallel(function=fun, values=SRC.chunks(values=files, n=cores), cores=cores)
 
         
 
