@@ -15,16 +15,19 @@ class PCloud:
             username: str, 
             password: str, 
             ) -> None:
-        self.client = PyCloud(username=username, password=password, endpoint='eapi')
-        
-
+        self.client = PyCloud(
+            username=username,
+            password=password, 
+            endpoint='eapi', 
+        )
 
     def _set_folder(self, folder: str) -> None:
         self.folder = '/' + '/'.join(folder.split('/'))
 
     def _list_files(self, path: str, extensions: list) -> None:
         if not self.list_files:
-            self.list_files = sorted(set(Structure.list_pictures(path=path, extensions=extensions)))
+            ls = Structure.list_pictures(path=path, extensions=extensions)
+            self.list_files = sorted(set(ls))
         return self.list_files
     
     def create_folder_if_not_exists(
@@ -75,7 +78,6 @@ class PCloud:
             path (str): path where local files
             pcloudpath (str): folder of pcloud pictures
         """
-        print(files)
         ls = list(map(lambda i: (os.path.dirname(str(i)), i), files))
         folders = sorted(set(map(lambda i: i[0], ls)))
         move_dict = dict(zip(folders, list(list(map(lambda i: str(i[1]), filter(lambda i: i[0]==f, ls))) for f in folders)))
@@ -95,7 +97,6 @@ class PCloud:
 
         Args:
             path (str): local path of files
-            pcloudpath (str): older of pcloud pictures
             extensions (list): extensions os files
             cores (int): cores to paralelize
         """

@@ -86,14 +86,7 @@ class Structure:
             filefrom.rename(str(fileto))
     
     def make(self) -> None:
-        """ Sort and Make a Structure for the pictures
-
-        Args:
-            path (_type_): main path of the pictures
-            extensions (list): name of pictures extenstions like jpg
-            raw_extensions (list): name of raw pictures extensions like raf
-            cores (int): number of cores to parallelize process
-        """
+        """ Sort and Make a Structure for the pictures"""
         logger.info(f"Sorting all pictures in {self.path}")
         fun = partial(self.key_time, pattern = self.file_pattern)
         pictures = self.list_pictures(path=self.path, extensions=self.extensions)
