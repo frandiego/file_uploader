@@ -1,6 +1,7 @@
 version = 1
 requires-python = ">=3.13"
 
+
 [[package]]
 name = "certifi"
 version = "2024.8.30"
@@ -9,6 +10,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/b0/ee/9b19140fe824b367c
 wheels = [
     { url = "https://files.pythonhosted.org/packages/12/90/3c9ff0512038035f59d279fddeb79f5f1eccd8859f06d6163c58798b9487/certifi-2024.8.30-py3-none-any.whl", hash = "sha256:922820b53db7a7257ffbda3f597266d435245903d80737e34f8a45ff3e3230d8", size = 167321 },
 ]
+
 
 [[package]]
 name = "charset-normalizer"
