@@ -11,12 +11,14 @@ from src import SRC
 class Structure:
     file_pattern = re.compile(r"^([0-9]+(-[0-9]+)+)_[a-z0-9]+$", re.IGNORECASE)
     cores: int = int(cpu_count())
+    temporary_path: str = None
 
     def __init__(
         self,
         path: str,
         extensions: str,
         raw_extensions: str,
+        temporary_path: str = None, 
     ) -> None:
         self.path = os.path.realpath(os.path.expanduser(path))
         self.extensions = list(map(lambda i: i.lower(), extensions.split(",")))
@@ -98,10 +100,11 @@ class Structure:
         pictures = self.list_pictures(path=self.path, extensions=self.extensions)
         translit = dict(SRC.parallel(function=fun, values=pictures, cores=self.cores))
         regex = re.compile("|".join(map(re.escape, translit)))
-        fun = partial(self.travel, regex=regex, translit=translit, path=self.path)
-        self.extensions += self.raw_extensions
+        path = self.path if not self.temporary_path else self.temporary_path
+        fun = partial(self.travel, regex=regex, translit=translit, path=path)
         all_files = self.list_pictures(
-            path=self.path, extensions=self.extensions + self.raw_extensions
+            path=self.path, 
+            extensions=self.extensions + self.raw_extensions,
         )
         travel_dict = dict(
             SRC.parallel(function=fun, values=all_files, cores=self.cores)
