@@ -1,2 +1,2 @@
 it:
-	poetry run python code 
+	uv run python code
