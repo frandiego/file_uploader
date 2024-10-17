@@ -80,7 +80,12 @@ class PCloud:
         """
         ls = list(map(lambda i: (os.path.dirname(str(i)), i), files))
         folders = sorted(set(map(lambda i: i[0], ls)))
-        move_dict = dict(zip(folders, list(list(map(lambda i: str(i[1]), filter(lambda i: i[0]==f, ls))) for f in folders)))
+        
+        move_dict = dict(zip(folders, list(list(
+            map(lambda i: str(i[1]), 
+                filter(lambda i: i[0]==f, ls))) 
+            for f in folders)))
+        
         for local_path, files in move_dict.items():
             pcloud_path = str(local_path).replace(path, pcloudpath)
             logger.info(f"Uploading {len(files)} to {pcloud_path}")
@@ -103,8 +108,8 @@ class PCloud:
         files = self._list_files(path=path, extensions=extensions)
         logger.info(f"Uploading {len(files)} to PCloud {self.folder}")
         fun = partial(self.upload_files, path=path, pcloudpath=self.folder)
-        SRC.parallel(function=fun, values=SRC.chunks(values=files, n=cores), cores=cores)
-
-        
-
-
+        SRC.parallel(
+            function=fun, 
+            values=SRC.chunks(values=files, n=cores), 
+            cores=cores,
+        )
