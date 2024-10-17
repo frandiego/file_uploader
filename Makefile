@@ -1,2 +1,2 @@
-it:
-	poetry run python code 
+it: # run the app
+	uv run python code

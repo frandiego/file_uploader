@@ -104,7 +104,3 @@ class PCloud:
         logger.info(f"Uploading {len(files)} to PCloud {self.folder}")
         fun = partial(self.upload_files, path=path, pcloudpath=self.folder)
         SRC.parallel(function=fun, values=SRC.chunks(values=files, n=cores), cores=cores)
-
-        
-
-
