@@ -38,30 +38,37 @@ class SRC:
         from pycloud import PCloud
         from structure import Structure
 
-        questionary.print("Setting Pictures Files", style="bold italic fg:yellow")
+        structure = None
+        pcloud = None
+        if questionary.confirm("Want To Sort the pictures").ask():
 
-        structure = cls.make_questions(
-            Structure,
-            questionary.form(
-                path=questionary.path(
-                    message="Where are the pictures?",
-                ),
-                extensions=questionary.text(
-                    message="What are the picture extensions?",
-                ),
-                raw_extensions=questionary.text(
-                    message="What are the RAW picture extensions?",
-                ),
-            ),
-        )
+            questionary.print("Setting Pictures Files", style="bold italic fg:yellow")
 
-        use_temp_folder = questionary.confirm("Use a Temporary Folder").ask()
-        if use_temp_folder:
-            temp_path = questionary.path(message = "Wuere is the Temporary Folder").ask()
-            structure.temporary_path = os.path.realpath(os.path.expanduser(temp_path))
-            
-        upload_files = questionary.confirm("Want To upload the files to PCloud").ask()
-        if upload_files:
+            structure = cls.make_questions(
+                Structure,
+                questionary.form(
+                    path=questionary.path(
+                        message="Where are the pictures?",
+                    ),
+                    extensions=questionary.text(
+                        message="What are the picture extensions?",
+                    ),
+                    raw_extensions=questionary.text(
+                        message="What are the RAW picture extensions?",
+                    ),
+                ),
+            )
+
+            use_temp_folder = questionary.confirm("Use a Temporary Folder").ask()
+            if use_temp_folder:
+                temp_path = questionary.path(
+                    message="Where is the Temporary Folder"
+                ).ask()
+                structure.temporary_path = os.path.realpath(
+                    os.path.expanduser(temp_path)
+                )
+
+        if questionary.confirm("Want To upload the files to PCloud").ask():
             questionary.print("Setting PCloud client", style="bold italic fg:yellow")
             pcloud = cls.make_questions(
                 PCloud,
@@ -76,14 +83,19 @@ class SRC:
             )
 
             folders = (
-                pcloud.client.listfolder(folderid=0).get("metadata", {}).get("contents", [])
+                pcloud.client.listfolder(folderid=0)
+                .get("metadata", {})
+                .get("contents", [])
             )
             folder_names = [i.get("name") for i in folders]
-            pcloud._set_folder(
-                folder=questionary.select("Pcloud Folder", folder_names).ask()
-            )
-        else:
-            pcloud = None
+            pcloud_folder = questionary.select("Pcloud Folder", folder_names).ask()
+            path = questionary.path(message="Where are the pictures in local?").ask()
+            extensions = questionary.text(
+                message="What are the picture extensions?"
+            ).ask()
 
+            pcloud._set_folder(folder=pcloud_folder)
+            pcloud._set_path(path=path)
+            pcloud._set_extensions(extensions=extensions)
 
         return SimpleNamespace(**{"structure": structure, "pcloud": pcloud})

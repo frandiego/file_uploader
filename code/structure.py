@@ -5,6 +5,8 @@ from pathlib import Path
 from PIL import Image
 import os
 import re
+
+
 from src import SRC
 
 
@@ -18,15 +20,15 @@ class Structure:
         path: str,
         extensions: str,
         raw_extensions: str,
-        temporary_path: str = None, 
     ) -> None:
         self.path = os.path.realpath(os.path.expanduser(path))
         self.extensions = list(map(lambda i: i.lower(), extensions.split(",")))
         self.raw_extensions = list(map(lambda i: i.lower(), raw_extensions.split(",")))
 
     @staticmethod
-    def list_pictures(path: str, extensions: list) -> list:
+    def list_pictures(path: str, extensions: list) -> filter:
         ls = Path(os.path.realpath(os.path.expanduser(path))).rglob("*")
+        ls = filter(lambda i: not str(i.name).startswith("."), ls)
         if extensions:
             regex = re.compile("|".join([rf"\.{i}$" for i in extensions]))
             ls = filter(lambda i: bool(regex.search(str(i.name).lower())), ls)
@@ -84,7 +86,8 @@ class Structure:
     def move(tuple) -> None:
         filefrom, fileto = tuple
         if str(filefrom) != str(fileto):
-            filefrom.rename(str(fileto))
+            # filefrom.rename(str(fileto))
+            os.system(f"cp {filefrom} {fileto}")
 
     def make(self) -> None:
         """Sort and Make a Structure for the pictures
@@ -103,7 +106,7 @@ class Structure:
         path = self.path if not self.temporary_path else self.temporary_path
         fun = partial(self.travel, regex=regex, translit=translit, path=path)
         all_files = self.list_pictures(
-            path=self.path, 
+            path=self.path,
             extensions=self.extensions + self.raw_extensions,
         )
         travel_dict = dict(
