@@ -2,11 +2,21 @@ from joblib import Parallel, delayed
 from types import SimpleNamespace
 from typing import Tuple, Text
 from loguru import logger
+from pathlib import Path
 import questionary
 import os
 
 
 class SRC:
+
+    @staticmethod
+    def is_not_hidden(path: str) -> bool:
+        return not any(map(lambda i: i.startswith('.'), str(path).split('/')))
+
+    @classmethod
+    def list_files(cls, path: str) -> filter:
+        return filter(cls.is_not_hidden, Path(path).rglob('*'))
+
     @staticmethod
     def chunks(values: list, n: int):
         """Yield successive n-sized chunks from lst."""
@@ -50,11 +60,8 @@ class SRC:
                     path=questionary.path(
                         message="Where are the pictures?",
                     ),
-                    extensions=questionary.text(
-                        message="What are the picture extensions?",
-                    ),
-                    raw_extensions=questionary.text(
-                        message="What are the RAW picture extensions?",
+                    copy=questionary.confirm(
+                        message="Copy files", default=False, 
                     ),
                 ),
             )
@@ -64,9 +71,8 @@ class SRC:
                 temp_path = questionary.path(
                     message="Where is the Temporary Folder"
                 ).ask()
-                structure.temporary_path = os.path.realpath(
-                    os.path.expanduser(temp_path)
-                )
+                structure.temporary_path = os.path.expanduser(temp_path)
+                
 
         if questionary.confirm("Want To upload the files to PCloud").ask():
             questionary.print("Setting PCloud client", style="bold italic fg:yellow")
@@ -87,15 +93,12 @@ class SRC:
                 .get("metadata", {})
                 .get("contents", [])
             )
+
             folder_names = [i.get("name") for i in folders]
             pcloud_folder = questionary.select("Pcloud Folder", folder_names).ask()
             path = questionary.path(message="Where are the pictures in local?").ask()
-            extensions = questionary.text(
-                message="What are the picture extensions?"
-            ).ask()
 
             pcloud._set_folder(folder=pcloud_folder)
             pcloud._set_path(path=path)
-            pcloud._set_extensions(extensions=extensions)
 
         return SimpleNamespace(**{"structure": structure, "pcloud": pcloud})

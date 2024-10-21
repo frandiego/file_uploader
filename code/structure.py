@@ -17,22 +17,11 @@ class Structure:
 
     def __init__(
         self,
-        path: str,
-        extensions: str,
-        raw_extensions: str,
+        path: str, 
+        copy: bool, 
     ) -> None:
         self.path = os.path.realpath(os.path.expanduser(path))
-        self.extensions = list(map(lambda i: i.lower(), extensions.split(",")))
-        self.raw_extensions = list(map(lambda i: i.lower(), raw_extensions.split(",")))
-
-    @staticmethod
-    def list_pictures(path: str, extensions: list) -> filter:
-        ls = Path(os.path.realpath(os.path.expanduser(path))).rglob("*")
-        ls = filter(lambda i: not str(i.name).startswith("."), ls)
-        if extensions:
-            regex = re.compile("|".join([rf"\.{i}$" for i in extensions]))
-            ls = filter(lambda i: bool(regex.search(str(i.name).lower())), ls)
-        return ls
+        self.copy = bool(copy)
 
     @staticmethod
     def key_time(
@@ -48,16 +37,20 @@ class Structure:
             tuple: (key of the picture, new filename of the picture)
         """
         filename = str(Path(path).name).split(".")[0]
+        key = filename.split("_")[-1]
         if len(filename) == 28:
             match = pattern.match(filename)
             if match:
                 if match.string == filename:
-                    key = filename.split("_")[-1]
                     return (key, filename)
-        time = Image.open(str(path)).getexif().get(306)
-        time = str(time).replace(" ", "-").replace(":", "-")
-        key = filename.split("_")[-1]
-        return (key, time + "_" + key)
+        else:
+            try:
+                time = Image.open(str(path)).getexif().get(306)
+                time = str(time).replace(" ", "-").replace(":", "-")
+                return (key, time + "_" + key)
+            except Exception:
+                return (key, None)
+        return None
 
     @staticmethod
     def travel(
@@ -83,36 +76,34 @@ class Structure:
         return (file, os.path.join(str(path), year, year_month, new_filename))
 
     @staticmethod
-    def move(tuple) -> None:
+    def move_file(tuple) -> None:
         filefrom, fileto = tuple
         if str(filefrom) != str(fileto):
-            # filefrom.rename(str(fileto))
+            Path(filefrom).rename(str(fileto))
+
+    @staticmethod
+    def copy_file(tuple) -> None:
+        filefrom, fileto = tuple
+        if str(filefrom) != str(fileto):
             os.system(f"cp {filefrom} {fileto}")
+
 
     def make(self) -> None:
         """Sort and Make a Structure for the pictures
 
         Args:
             path (_type_): main path of the pictures
-            extensions (list): name of pictures extenstions like jpg
-            raw_extensions (list): name of raw pictures extensions like raf
             cores (int): number of cores to parallelize process
         """
         logger.info(f"Sorting all pictures in {self.path}")
         fun = partial(self.key_time, pattern=self.file_pattern)
-        pictures = self.list_pictures(path=self.path, extensions=self.extensions)
-        translit = dict(SRC.parallel(function=fun, values=pictures, cores=self.cores))
+        translit = dict(filter(bool,SRC.parallel(function=fun, values=SRC.list_files(path), cores=self.cores)))
         regex = re.compile("|".join(map(re.escape, translit)))
         path = self.path if not self.temporary_path else self.temporary_path
         fun = partial(self.travel, regex=regex, translit=translit, path=path)
-        all_files = self.list_pictures(
-            path=self.path,
-            extensions=self.extensions + self.raw_extensions,
-        )
-        travel_dict = dict(
-            SRC.parallel(function=fun, values=all_files, cores=self.cores)
-        )
+        travel_dict = dict(SRC.parallel(function=fun, values=SRC.list_files(path), cores=self.cores))
         folders = set(map(lambda i: Path(i).parent._str, travel_dict.values()))
         for folder in list(folders):
             SRC.mkdir(folder)
-        SRC.parallel(function=self.move, values=travel_dict.items(), cores=self.cores)
+        fun = self.copy_file if self.copy else self.move_file
+        SRC.parallel(function=fun, values=travel_dict.items(), cores=self.cores)

@@ -5,13 +5,10 @@ from loguru import logger
 from src import SRC
 import os
 
-from structure import Structure
-
 
 class PCloud:
     path: str = None
     folder: str = None
-    list_files: list = None
     cores: int = int(cpu_count())
 
     def __init__(
@@ -30,17 +27,6 @@ class PCloud:
 
     def _set_path(self, path: str) -> None:
         self.path = os.path.realpath(os.path.expanduser(str(path)))
-
-    def _set_extensions(self, extensions: str) -> None:
-        self.extensions = list(
-            map(lambda i: i.strip().lower(), str(extensions).split(","))
-        )
-
-    def _list_files(self, path: str, extensions: list) -> None:
-        if not self.list_files:
-            ls = Structure.list_pictures(path=path, extensions=extensions)
-            self.list_files = sorted(set(ls))
-        return self.list_files
 
     def create_folder_if_not_exists(
         self,
@@ -61,16 +47,14 @@ class PCloud:
         self,
         pcloudpath: str,
         path: str,
-        extensions: list,
     ) -> None:
         """Check if the folders in Pcloud
 
         Args:
             pcloudpath (str): Main Path of pictures in Pcloud
             path (str): path for pictures structured
-            extensions (list): extensions of pictures to upload
         """
-        ls = self._list_files(path=path, extensions=extensions)
+        ls = SRC.list_files(path=path)
         folders = set(map(lambda i: i.parent._str, ls))
         pcloud_folders = [i.replace(path, pcloudpath) for i in folders]
         for folder in pcloud_folders:
@@ -112,10 +96,9 @@ class PCloud:
 
         Args:
             path (str): local path of files
-            extensions (list): extensions os files
             cores (int): cores to paralelize
         """
-        files = self._list_files(path=self.path, extensions=self.extensions)
+        files =  SRC.list_files(path=self.path)
         logger.info(f"Uploading {len(files)} to PCloud {self.folder}")
         fun = partial(
             self.upload_files,
