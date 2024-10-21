@@ -97,7 +97,7 @@ class Structure:
         """
         logger.info(f"Sorting all pictures in {self.path}")
         fun = partial(self.key_time, pattern=self.file_pattern)
-        translit = dict(filter(bool,SRC.parallel(function=fun, values=SRC.list_files(path), cores=self.cores)))
+        translit = dict(filter(bool,SRC.parallel(function=fun, values=SRC.list_files(self.path), cores=self.cores)))
         regex = re.compile("|".join(map(re.escape, translit)))
         path = self.path if not self.temporary_path else self.temporary_path
         fun = partial(self.travel, regex=regex, translit=translit, path=path)
