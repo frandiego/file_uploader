@@ -17,8 +17,8 @@ class Structure:
 
     def __init__(
         self,
-        path: str, 
-        copy: bool, 
+        path: str,
+        copy: bool,
     ) -> None:
         self.path = os.path.realpath(os.path.expanduser(path))
         self.copy = bool(copy)
@@ -87,7 +87,6 @@ class Structure:
         if str(filefrom) != str(fileto):
             os.system(f"cp {filefrom} {fileto}")
 
-
     def make(self) -> None:
         """Sort and Make a Structure for the pictures
 
@@ -97,11 +96,20 @@ class Structure:
         """
         logger.info(f"Sorting all pictures in {self.path}")
         fun = partial(self.key_time, pattern=self.file_pattern)
-        translit = dict(filter(bool,SRC.parallel(function=fun, values=SRC.list_files(self.path), cores=self.cores)))
+        translit = dict(
+            filter(
+                bool,
+                SRC.parallel(
+                    function=fun, values=SRC.list_files(self.path), cores=self.cores
+                ),
+            )
+        )
         regex = re.compile("|".join(map(re.escape, translit)))
         path = self.path if not self.temporary_path else self.temporary_path
         fun = partial(self.travel, regex=regex, translit=translit, path=path)
-        travel_dict = dict(SRC.parallel(function=fun, values=SRC.list_files(path), cores=self.cores))
+        travel_dict = dict(
+            SRC.parallel(function=fun, values=SRC.list_files(path), cores=self.cores)
+        )
         folders = set(map(lambda i: Path(i).parent._str, travel_dict.values()))
         for folder in list(folders):
             SRC.mkdir(folder)

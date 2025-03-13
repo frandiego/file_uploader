@@ -98,7 +98,7 @@ class PCloud:
             path (str): local path of files
             cores (int): cores to paralelize
         """
-        files =  SRC.list_files(path=self.path)
+        files = SRC.list_files(path=self.path)
         logger.info(f"Uploading {len(files)} to PCloud {self.folder}")
         fun = partial(
             self.upload_files,

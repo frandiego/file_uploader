@@ -11,11 +11,11 @@ class SRC:
 
     @staticmethod
     def is_not_hidden(path: str) -> bool:
-        return not any(map(lambda i: i.startswith('.'), str(path).split('/')))
+        return not any(map(lambda i: i.startswith("."), str(path).split("/")))
 
     @classmethod
     def list_files(cls, path: str) -> filter:
-        return filter(cls.is_not_hidden, Path(path).rglob('*'))
+        return filter(cls.is_not_hidden, Path(path).rglob("*"))
 
     @staticmethod
     def chunks(values: list, n: int):
@@ -61,7 +61,8 @@ class SRC:
                         message="Where are the pictures?",
                     ),
                     copy=questionary.confirm(
-                        message="Copy files", default=False, 
+                        message="Copy files",
+                        default=False,
                     ),
                 ),
             )
@@ -72,7 +73,6 @@ class SRC:
                     message="Where is the Temporary Folder"
                 ).ask()
                 structure.temporary_path = os.path.expanduser(temp_path)
-                
 
         if questionary.confirm("Want To upload the files to PCloud").ask():
             questionary.print("Setting PCloud client", style="bold italic fg:yellow")
