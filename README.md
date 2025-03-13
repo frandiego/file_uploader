@@ -10,12 +10,12 @@ date).
 - **Efficient & Fast**: Designed to handle large batches of photos.
   
 ## Requirements
-- `poetry`
+- `uv`
 - `python 3.12`
 - `PCloud Account`
 ## Installation
-1. Install poetry
- * https://python-poetry.org/docs/
+1. Install uv
+ * https://docs.astral.sh/uv/getting-started/installation/
 2. Clone this repository:
 
    ```bash
