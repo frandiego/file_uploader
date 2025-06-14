@@ -2,20 +2,31 @@ from functools import partial
 from joblib import cpu_count
 from pcloud import PyCloud
 from loguru import logger
-from src import SRC
 import os
+
+from src import SRC
 
 
 class PCloud:
+    """Class to handle file uploads to PCloud storage service.
+
+    Attributes:
+        path (str): Local file system path to upload from.
+        folder (str): Remote PCloud folder path to upload to.
+        cores (int): Number of CPU cores to use for parallel uploads.
+    """
+
     path: str = None
     folder: str = None
     cores: int = int(cpu_count())
 
-    def __init__(
-        self,
-        username: str,
-        password: str,
-    ) -> None:
+    def __init__(self, username: str, password: str) -> None:
+        """Initialize PCloud client.
+
+        Args:
+            username: PCloud account username.
+            password: PCloud account password.
+        """
         self.client = PyCloud(
             username=username,
             password=password,
@@ -23,19 +34,26 @@ class PCloud:
         )
 
     def _set_folder(self, folder: str) -> None:
+        """Set the remote PCloud folder path.
+
+        Args:
+            folder: Remote folder path to set.
+        """
         self.folder = "/" + "/".join(folder.split("/"))
 
     def _set_path(self, path: str) -> None:
-        self.path = os.path.realpath(os.path.expanduser(str(path)))
-
-    def create_folder_if_not_exists(
-        self,
-        path: str,
-    ) -> None:
-        """Create a Folder and its parents if does not exists in Pcloud
+        """Set the local file system path.
 
         Args:
-            path (str): full path of the folder to create
+            path: Local path to set.
+        """
+        self.path = os.path.realpath(os.path.expanduser(str(path)))
+
+    def create_folder_if_not_exists(self, path: str) -> None:
+        """Create a folder and its parents in PCloud if they don't exist.
+
+        Args:
+            path: Full path of the folder to create.
         """
         folders = list(filter(lambda i: i != "", path.split("/")))
         for i in range(len(folders)):
@@ -43,16 +61,12 @@ class PCloud:
             logger.info(f"Checking if {path} exists in PCloud")
             self.client.createfolderifnotexists(path=path)
 
-    def check_folders(
-        self,
-        pcloudpath: str,
-        path: str,
-    ) -> None:
-        """Check if the folders in Pcloud
+    def check_folders(self, pcloudpath: str, path: str) -> None:
+        """Check and create necessary folders in PCloud.
 
         Args:
-            pcloudpath (str): Main Path of pictures in Pcloud
-            path (str): path for pictures structured
+            pcloudpath: Main path in PCloud where files will be uploaded.
+            path: Local path containing the file structure.
         """
         ls = SRC.list_files(path=path)
         folders = set(map(lambda i: i.parent._str, ls))
@@ -60,18 +74,13 @@ class PCloud:
         for folder in pcloud_folders:
             self.create_folder_if_not_exists(path=folder)
 
-    def upload_files(
-        self,
-        files: list,
-        path: str,
-        pcloudpath: str,
-    ) -> None:
-        """upload a list of files to pcloud
+    def upload_files(self, files: list, path: str, pcloudpath: str) -> None:
+        """Upload a list of files to PCloud.
 
         Args:
-            files (list): list of files
-            path (str): path where local files
-            pcloudpath (str): folder of pcloud pictures
+            files: List of files to upload.
+            path: Local path containing the files.
+            pcloudpath: Remote PCloud path to upload to.
         """
         ls = list(map(lambda i: (os.path.dirname(str(i)), i), files))
         folders = sorted(set(map(lambda i: i[0], ls)))
@@ -92,11 +101,10 @@ class PCloud:
             self.client.uploadfile(files=files, path=str(pcloud_path))
 
     def upload(self) -> None:
-        """upload all files to pcloud
+        """Upload all files to PCloud using parallel processing.
 
-        Args:
-            path (str): local path of files
-            cores (int): cores to paralelize
+        Uses multiple CPU cores to parallelize the upload process for better performance.
+        Files are uploaded maintaining the local directory structure.
         """
         files = SRC.list_files(path=self.path)
         logger.info(f"Uploading {len(files)} to PCloud {self.folder}")
